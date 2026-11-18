@@ -1,10 +1,11 @@
-const CACHE='baba-kids-app-v5-update-1';
+// Increment CACHE with each release to trigger the in-app Update Now prompt.
+const CACHE='baba-kids-app-v5-phase1-20261118';
 const PREFIX='baba-kids-app-';
 const LEGACY='baba-kids-v4-1';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
-  // Do not skip waiting: let the child choose when to update.
+  // Remain waiting until Update Now is selected.
 });
 self.addEventListener('message',event=>{
   if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();
@@ -20,7 +21,24 @@ self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET')return;
   const url=new URL(request.url);
-  if(url.origin!==self.location.origin||!url.pathname.startsWith(new URL(self.registration.scope).pathname))return;
+  const scope=new URL(self.registration.scope);
+  if(url.origin!==scope.origin||!url.pathname.startsWith(scope.pathname))return;
+  if(request.mode==='navigate'){
+    event.respondWith((async()=>{
+      try{
+        const response=await fetch(request);
+        if(response.ok){
+          const cache=await caches.open(CACHE);
+          await cache.put(request,response.clone()).catch(()=>{});
+        }
+        return response;
+      }catch{
+        return (await caches.match(request))||(await caches.match('./index.html'))||
+          new Response('Offline: open Baba & Kids World once while online.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
+      }
+    })());
+    return;
+  }
   event.respondWith((async()=>{
     const cached=await caches.match(request);
     if(cached)return cached;
