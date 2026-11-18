@@ -19,4 +19,13 @@ assert.match(sw,/const CACHE='baba-kids-app-/);
 assert.equal(manifest.start_url,'./');
 assert.equal(manifest.scope,'./');
 assert.equal(manifest.display,'standalone');
+assert.ok(fs.existsSync('icon.svg'),'Android SVG icon exists');
+const icon=fs.readFileSync('icon.svg','utf8');
+assert.match(icon,/<svg[\s\S]*viewBox="0 0 512 512"/);
+assert.ok(!icon.includes('⭐'),'Icon uses a reliable vector star instead of a platform-dependent emoji');
+assert.ok(manifest.icons.some(i=>i.src==='icon.svg'&&i.purpose.includes('maskable')),'Manifest includes a maskable app icon');
+for(const asset of ['./index.html','./manifest.webmanifest','./icon.svg'])assert.ok(sw.includes("'"+asset+"'"),'Missing offline asset: '+asset);
+assert.match(html,/function recoverSnapshot\(/);
+assert.match(html,/localStorage\.setItem\(KEY,JSON\.stringify\(data\)\)/);
+
 console.log('Baba & Kids World smoke checks passed.');
