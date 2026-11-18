@@ -1,1 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#7061dc"/><circle cx="256" cy="248" r="155" fill="#fff3c4"/><text x="256" y="292" font-size="170" text-anchor="middle">⭐</text><text x="256" y="422" font-size="40" font-family="sans-serif" font-weight="bold" fill="white" text-anchor="middle">BABA KIDS</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Baba Kids app icon">
+  <rect width="512" height="512" fill="#7061dc"/>
+  <circle cx="256" cy="241" r="150" fill="#fff3c4"/>
+  <path d="M256 135 284 198 354 205 301 253 316 323 256 287 196 323 211 253 158 205 228 198Z" fill="#ffb83f" stroke="#e99326" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M180 371H332" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity=".7"/>
+  <text x="256" y="414" font-family="Arial, sans-serif" font-size="37" font-weight="800" fill="#ffffff" text-anchor="middle">BABA KIDS</text>
+</svg>
