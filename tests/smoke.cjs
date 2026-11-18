@@ -1,0 +1,22 @@
+// Zero-dependency regression checks. Run: node tests/smoke.cjs
+const fs=require('node:fs');
+const vm=require('node:vm');
+const assert=require('node:assert/strict');
+const html=fs.readFileSync('index.html','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+const manifest=JSON.parse(fs.readFileSync('manifest.webmanifest','utf8'));
+const script=html.match(/<script>([\s\S]*?)<\/script>/);
+assert.ok(script,'Inline app script is present');
+new vm.Script(script[1],{filename:'index.html:inline'});
+new vm.Script(sw,{filename:'sw.js'});
+assert.match(html,/const KEY='bkw-v1-progress'/,'Existing progress key is preserved');
+assert.match(html,/const PIN_KEY='bkw-parent-pin-v4'/,'Parent PIN key is preserved');
+for(const term of ['Arfa','Mohid','mathAcademy','SNAPSHOT_KEY','baba-connectivity','Update Now','function restore','function exportData'])assert.ok(html.includes(term),'Missing feature: '+term);
+assert.ok(!html.includes("tile('game:math','➗','Math Quest'"),'Removed Math Quest must stay removed');
+assert.match(sw,/SKIP_WAITING/);
+assert.match(sw,/const cached=\(await caches.match\(request\)\)/,'Navigation uses cached version first');
+assert.match(sw,/const CACHE='baba-kids-app-/);
+assert.equal(manifest.start_url,'./');
+assert.equal(manifest.scope,'./');
+assert.equal(manifest.display,'standalone');
+console.log('Baba & Kids World smoke checks passed.');
