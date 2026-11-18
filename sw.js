@@ -25,6 +25,9 @@ self.addEventListener('fetch',event=>{
   if(url.origin!==scope.origin||!url.pathname.startsWith(scope.pathname))return;
   if(request.mode==='navigate'){
     event.respondWith((async()=>{
+      // Keep the current version until the user accepts Update Now.
+      const cached=(await caches.match(request))||(await caches.match('./index.html'));
+      if(cached)return cached;
       try{
         const response=await fetch(request);
         if(response.ok){
@@ -33,8 +36,7 @@ self.addEventListener('fetch',event=>{
         }
         return response;
       }catch{
-        return (await caches.match(request))||(await caches.match('./index.html'))||
-          new Response('Offline: open Baba & Kids World once while online.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
+        return new Response('Offline: open Baba & Kids World once while online.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
       }
     })());
     return;
