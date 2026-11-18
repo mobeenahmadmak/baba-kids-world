@@ -116,5 +116,44 @@ function mathSaveBank(){if(!parentUnlocked)return;const prompt=$('#bankPrompt').
 function bindMath(){document.querySelectorAll('[data-math]').forEach(el=>el.addEventListener('click',()=>{const a=el.dataset.math;if(a==='home'){view='mathacademy';mathSession=null;render()}else if(a==='start')mathStart('practice');else if(a==='daily')mathStart('daily');else if(a==='review')mathStart('review');else if(a==='next')mathNext();else if(a==='bank'){if(!parentGate('mathbank'))return;view='mathbank';render()}else if(a==='progress'){view='mathprogress';render()}}));document.querySelectorAll('[data-math-answer]').forEach(el=>el.addEventListener('click',()=>mathAnswer(Number(el.dataset.mathAnswer))));$('#mathBankForm')?.addEventListener('submit',e=>{e.preventDefault();mathSaveBank()});document.querySelectorAll('[data-math-delete]').forEach(el=>el.addEventListener('click',()=>{if(!parentUnlocked)return;const i=Number(el.dataset.mathDelete);if(confirm('Delete this question?')){mathState().custom.splice(i,1);save();render()}}));document.querySelectorAll('[data-math-edit]').forEach(el=>el.addEventListener('click',()=>{if(!parentUnlocked)return;const i=Number(el.dataset.mathEdit),q=mathState().custom[i];if(!q)return;const p=prompt('Edit question:',q.prompt);if(p===null)return;const a=prompt('Correct answer:',q.answer);if(a===null)return;if(!p.trim()||!a.trim()||!Number.isFinite(Number(a))||Number(a)<0){alert('Question and a non-negative numeric answer are required.');return}q.prompt=p.trim().slice(0,250);q.answer=a.trim().slice(0,60);save();render()}))}
 
 render();
-if(location.protocol==='https:'&&'serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+(function setupAppUpdates(){
+  if(location.protocol!=='https:'||!('serviceWorker' in navigator))return;
+  let pendingWorker=null;
+  let refreshing=false;
+  const banner=document.createElement('aside');
+  banner.id='baba-update-banner';
+  banner.setAttribute('role','status');
+  banner.setAttribute('aria-live','polite');
+  banner.style.cssText='display:none;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99999;max-width:560px;margin:0 auto;background:#fff;color:#292448;border:2px solid #7061dc;border-radius:18px;padding:14px 16px;box-shadow:0 8px 30px #28205240;font:600 15px system-ui,sans-serif;';
+  banner.innerHTML='<div style="font-size:17px;margin-bottom:5px">New adventures are ready!</div><div style="font-weight:400;margin-bottom:12px">Baba has updated your learning world. Your stars and progress will stay saved.</div><button id="baba-update-now" type="button" style="background:#7061dc;color:white;border:0;border-radius:12px;padding:12px 18px;font-weight:700;min-height:44px;cursor:pointer">Update Now</button> <button id="baba-update-later" type="button" style="background:transparent;color:#292448;border:0;padding:12px;min-height:44px;cursor:pointer">Later</button>';
+  document.body.appendChild(banner);
+  const show=worker=>{if(!navigator.serviceWorker.controller||!worker)return;pendingWorker=worker;banner.style.display='block'};
+  banner.querySelector('#baba-update-now').addEventListener('click',()=>{
+    if(!pendingWorker)return;
+    // Existing progress is stored in localStorage and is not touched by service-worker caches.
+    banner.querySelector('#baba-update-now').disabled=true;
+    banner.querySelector('#baba-update-now').textContent='Updating…';
+    pendingWorker.postMessage({type:'SKIP_WAITING'});
+  });
+  banner.querySelector('#baba-update-later').addEventListener('click',()=>{banner.style.display='none'});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshing)return;
+    refreshing=true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+    const checkWaiting=()=>{if(reg.waiting)show(reg.waiting)};
+    checkWaiting();
+    reg.addEventListener('updatefound',()=>{
+      const worker=reg.installing;
+      if(!worker)return;
+      worker.addEventListener('statechange',()=>{if(worker.state==='installed')checkWaiting()});
+    });
+    const check=()=>{if(navigator.onLine)reg.update().catch(()=>{})};
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+    window.addEventListener('online',check);
+    setInterval(()=>{if(!document.hidden)check()},60*60*1000);
+    check();
+  }).catch(()=>{});
+})();
 </script></body></html>
