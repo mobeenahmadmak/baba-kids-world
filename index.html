@@ -95,7 +95,7 @@ async function restore(file){if(!file)return;try{if(file.size>2000000)throw Erro
 const previousRaw=localStorage.getItem(KEY);
 try{if(previousRaw)localStorage.setItem(SNAPSHOT_KEY,previousRaw)}catch{}
 data=o.profiles;
-if(!save()){data=previousData;throw Error('Device storage is full or unavailable; existing progress was kept')}
+try{localStorage.setItem(KEY,JSON.stringify(data))}catch{data=previousData;throw Error('Device storage is full or unavailable; existing progress was kept')}
 alert('Backup restored successfully!');view='home';render()}catch(e){alert('Could not restore: '+e.message)}}
 function recoverSnapshot(){
   if(!parentUnlocked)return;
@@ -108,7 +108,8 @@ function recoverSnapshot(){
   if(!confirm('Restore an earlier local snapshot for BOTH children? First export your current progress. This replaces current progress.'))return;
   const old=data;
   data=snapshot;
-  if(!save()){data=old;return}
+  // Preserve the recovery copy instead of overwriting it during restoration.
+  try{localStorage.setItem(KEY,JSON.stringify(data))}catch{data=old;alert('Recovery could not be saved; current progress was kept.');return}
   alert('Earlier local progress restored. Export a backup now.');
   view='home';render();
 }
@@ -175,7 +176,7 @@ render();
   banner.style.cssText='display:none;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99999;max-width:560px;margin:0 auto;background:#fff;color:#292448;border:2px solid #7061dc;border-radius:18px;padding:14px 16px;box-shadow:0 8px 30px #28205240;font:600 15px system-ui,sans-serif;';
   banner.innerHTML='<div style="font-size:17px;margin-bottom:5px">New adventures are ready!</div><div style="font-weight:400;margin-bottom:12px">Baba has updated your learning world. Your stars and progress will stay saved.</div><button id="baba-update-now" type="button" style="background:#7061dc;color:white;border:0;border-radius:12px;padding:12px 18px;font-weight:700;min-height:44px;cursor:pointer">Update Now</button> <button id="baba-update-later" type="button" style="background:transparent;color:#292448;border:0;padding:12px;min-height:44px;cursor:pointer">Later</button>';
   document.body.appendChild(banner);
-  const show=worker=>{if(!navigator.serviceWorker.controller||!worker)return;pendingWorker=worker;banner.style.display='block'};
+  const show=worker=>{if(!navigator.serviceWorker.controller||!worker)return;pendingWorker=worker;banner.style.display='block';banner.querySelector('#baba-update-now').disabled=false;banner.querySelector('#baba-update-now').textContent='Update Now'};
   banner.querySelector('#baba-update-now').addEventListener('click',()=>{
     if(!pendingWorker)return;
     // Existing progress is stored in localStorage and is not touched by service-worker caches.
@@ -197,7 +198,7 @@ render();
       if(!worker)return;
       worker.addEventListener('statechange',()=>{if(worker.state==='installed')checkWaiting()});
     });
-    const check=()=>{if(navigator.onLine)reg.update().catch(()=>{})};
+    const check=()=>{if(navigator.onLine)reg.update().then(checkWaiting).catch(()=>{})};
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
     window.addEventListener('online',check);
     setInterval(()=>{if(!document.hidden)check()},60*60*1000);
