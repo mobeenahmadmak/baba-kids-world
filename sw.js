@@ -1,5 +1,5 @@
 // Increment CACHE with each release to trigger the in-app Update Now prompt.
-const CACHE='baba-kids-app-v7-android-back-20261118';
+const CACHE='baba-kids-app-v8-daily-math-20261124';
 const PREFIX='baba-kids-app-';
 const LEGACY='baba-kids-v4-1';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
